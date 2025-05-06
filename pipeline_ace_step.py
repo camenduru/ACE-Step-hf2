@@ -24,6 +24,7 @@ from models.ace_step_transformer import ACEStepTransformer2DModel
 from models.lyrics_utils.lyric_tokenizer import VoiceBpeTokenizer
 from apg_guidance import apg_forward, MomentumBuffer, cfg_forward, cfg_zero_star, cfg_double_condition_forward
 import torchaudio
+import torio
 
 
 torch.backends.cudnn.benchmark = False
@@ -917,7 +918,7 @@ class ACEStepPipeline:
                 target_latents = torch.cate([to_right_pad_gt_latents, target_latents], dim=0)
         return target_latents
 
-    def latents2audio(self, latents, target_wav_duration_second=30, sample_rate=48000, save_path=None, format="flac"):
+    def latents2audio(self, latents, target_wav_duration_second=30, sample_rate=48000, save_path=None, format="mp3"):
         output_audio_paths = []
         bs = latents.shape[0]
         audio_lengths = [target_wav_duration_second * sample_rate] * bs
@@ -930,7 +931,7 @@ class ACEStepPipeline:
             output_audio_paths.append(output_audio_path)
         return output_audio_paths
 
-    def save_wav_file(self, target_wav, idx, save_path=None, sample_rate=48000, format="flac"):
+    def save_wav_file(self, target_wav, idx, save_path=None, sample_rate=48000, format="mp3"):
         if save_path is None:
             logger.warning("save_path is None, using default path ./outputs/")
             base_path = f"./outputs"
@@ -941,7 +942,7 @@ class ACEStepPipeline:
 
         output_path_flac = f"{base_path}/output_{time.strftime('%Y%m%d%H%M%S')}_{idx}.{format}"
         target_wav = target_wav.float()
-        torchaudio.save(output_path_flac, target_wav, sample_rate=sample_rate, format=format)
+        torchaudio.save(output_path_flac, target_wav, sample_rate=sample_rate, format=format, compression=torio.io.CodecConfig(bit_rate=320000))
         return output_path_flac
 
     def infer_latents(self, input_audio_path):
@@ -986,7 +987,7 @@ class ACEStepPipeline:
         edit_n_max: float = 1.0,
         edit_n_avg: int = 1,
         save_path: str = None,
-        format: str = "flac",
+        format: str = "mp3",
         batch_size: int = 1,
         debug: bool = False,
     ):
