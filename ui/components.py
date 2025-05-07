@@ -594,6 +594,11 @@ def create_main_demo_ui(
         gr.Markdown(
             """
             <h1 style="text-align: center;">ACE-Step: A Step Towards Music Generation Foundation Model</h1>
+            <p>
+                <a href="https://ace-step.github.io/">Project</a> |
+                <a href="https://huggingface.co/ACE-Step/ACE-Step-v1-3.5B">Checkpoints</a> |
+                <a href="https://discord.gg/rjAZz2xBdG">Discord</a> 
+            </p>
         """)
 
         with gr.Tab("text2music"):
