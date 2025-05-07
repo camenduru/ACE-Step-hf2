@@ -7,7 +7,7 @@ import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--checkpoint_path", type=str, default=None)
-parser.add_argument("--server_name", type=str, default="127.0.0.1")
+parser.add_argument("--server_name", type=str, default="0.0.0.0")
 parser.add_argument("--port", type=int, default=7860)
 parser.add_argument("--device_id", type=int, default=0)
 parser.add_argument("--share", action='store_true', default=False)
@@ -36,9 +36,7 @@ def main(args):
         sample_data_func=data_sampler.sample,
     )
     demo.launch(
-        server_name=args.server_name,
-        server_port=args.port,
-        share=args.share
+        
     )
 
 
