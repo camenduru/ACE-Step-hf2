@@ -68,8 +68,8 @@ class ACEStepPipeline:
         if device.type == "cpu" and torch.backends.mps.is_available():
             device = torch.device("mps")
         self.dtype = torch.bfloat16 if dtype == "bfloat16" else torch.float32
-        if device.type == "mps" and self.dtype == torch.bfloat16:
-            self.dtype = torch.float16
+        if device.type == "mps":
+            self.dtype = torch.float32
         self.device = device
         self.loaded = False
         self.torch_compile = torch_compile
@@ -181,33 +181,33 @@ class ACEStepPipeline:
             last_hidden_states = outputs.last_hidden_state
         attention_mask = inputs["attention_mask"]
         return last_hidden_states, attention_mask
-
+    
     def get_text_embeddings_null(self, texts, device, text_max_length=256, tau=0.01, l_min=8, l_max=10):
         inputs = self.text_tokenizer(texts, return_tensors="pt", padding=True, truncation=True, max_length=text_max_length)
         inputs = {key: value.to(device) for key, value in inputs.items()}
         if self.text_encoder_model.device != device:
             self.text_encoder_model.to(device)
-
+        
         def forward_with_temperature(inputs, tau=0.01, l_min=8, l_max=10):
             handlers = []
-
+            
             def hook(module, input, output):
                 output[:] *= tau
                 return output
-
+        
             for i in range(l_min, l_max):
                 handler = self.text_encoder_model.encoder.block[i].layer[0].SelfAttention.q.register_forward_hook(hook)
                 handlers.append(handler)
-
+        
             with torch.no_grad():
                 outputs = self.text_encoder_model(**inputs)
                 last_hidden_states = outputs.last_hidden_state
-
+        
             for hook in handlers:
                 hook.remove()
-
+        
             return last_hidden_states
-
+    
         last_hidden_states = forward_with_temperature(inputs, tau, l_min, l_max)
         return last_hidden_states
 
@@ -236,7 +236,7 @@ class ACEStepPipeline:
 
     def get_lang(self, text):
         language = "en"
-        try:
+        try:    
             _ = self.lang_segment.getTexts(text)
             langCounts = self.lang_segment.getCounts()
             language = langCounts[0][0]
@@ -912,9 +912,9 @@ class ACEStepPipeline:
 
         if is_extend:
             if to_right_pad_gt_latents is not None:
-                target_latents = torch.cate([target_latents, to_right_pad_gt_latents], dim=-1)
+                target_latents = torch.cat([target_latents, to_right_pad_gt_latents], dim=-1)
             if to_left_pad_gt_latents is not None:
-                target_latents = torch.cate([to_right_pad_gt_latents, target_latents], dim=0)
+                target_latents = torch.cat([to_right_pad_gt_latents, target_latents], dim=0)
         return target_latents
 
     def latents2audio(self, latents, target_wav_duration_second=30, sample_rate=48000, save_path=None, format="flac"):
