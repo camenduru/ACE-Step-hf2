@@ -955,6 +955,7 @@ class ACEStepPipeline:
         latents, _ = self.music_dcae.encode(input_audio, sr=sr)
         return latents
 
+    @spaces.GPU
     def __call__(
         self,
         audio_duration: float = 60.0,
