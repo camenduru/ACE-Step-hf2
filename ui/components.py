@@ -595,9 +595,9 @@ def create_main_demo_ui(
             """
             <h1 style="text-align: center;">ACE-Step: A Step Towards Music Generation Foundation Model</h1>
             <p>
-                <a href="https://ace-step.github.io/">Project</a> |
+                <a href="https://ace-step.github.io/" target='_blank'>Project</a> |
                 <a href="https://huggingface.co/ACE-Step/ACE-Step-v1-3.5B">Checkpoints</a> |
-                <a href="https://discord.gg/rjAZz2xBdG">Discord</a> 
+                <a href="https://discord.gg/rjAZz2xBdG" target='_blank'>Discord</a> 
             </p>
         """)
 
