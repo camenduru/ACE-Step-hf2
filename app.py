@@ -12,7 +12,7 @@ parser.add_argument("--port", type=int, default=7860)
 parser.add_argument("--device_id", type=int, default=0)
 parser.add_argument("--share", action='store_true', default=False)
 parser.add_argument("--bf16", action='store_true', default=True)
-parser.add_argument("--torch_compile", type=bool, default=True)
+parser.add_argument("--torch_compile", type=bool, default=False)
 
 args = parser.parse_args()
 os.environ["CUDA_VISIBLE_DEVICES"] = str(args.device_id)
