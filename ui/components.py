@@ -71,6 +71,32 @@ def create_text2music_ui(
                 audio_duration = gr.Slider(-1, 240.0, step=0.00001, value=-1, label="Audio Duration", interactive=True, info="-1 means random duration (30 ~ 240).", scale=9)
                 sample_bnt = gr.Button("Sample", variant="primary", scale=1)
 
+            # audio2audio
+            audio2audio_enable = gr.Checkbox(label="Enable Audio2Audio", value=False, info="Check to enable Audio-to-Audio generation using a reference audio.", elem_id="audio2audio_checkbox")
+            ref_audio_input = gr.Audio(type="filepath", label="Reference Audio (for Audio2Audio)", visible=False, elem_id="ref_audio_input", show_download_button=True)
+            ref_audio_strength = gr.Slider(
+                label="Refer audio strength",
+                minimum=0.0,
+                maximum=1.0,
+                step=0.01,
+                value=0.5,
+                elem_id="ref_audio_strength",
+                visible=False,
+                interactive=True,
+            )
+
+            def toggle_ref_audio_visibility(is_checked):
+                return (
+                    gr.update(visible=is_checked, elem_id="ref_audio_input"),
+                    gr.update(visible=is_checked, elem_id="ref_audio_strength"),
+                )
+
+            audio2audio_enable.change(
+                fn=toggle_ref_audio_visibility,
+                inputs=[audio2audio_enable],
+                outputs=[ref_audio_input, ref_audio_strength],
+            )
+
             prompt = gr.Textbox(lines=2, label="Tags", max_lines=4, value=TAG_DEFAULT, info="Support tags, descriptions, and scene. Use commas to separate different tags.\ntags and lyrics examples are from ai music generation community")
             lyrics = gr.Textbox(lines=9, label="Lyrics", max_lines=13, value=LYRIC_DEFAULT, info="Support lyric structure tags like [verse], [chorus], and [bridge] to separate different parts of the lyrics.\nUse [instrumental] or [inst] to generate instrumental music. Not support genre structure tag in lyrics")
 
@@ -533,6 +559,21 @@ def create_text2music_ui(
                 ", ".join(map(str, json_data["oss_steps"])),
                 json_data["guidance_scale_text"] if "guidance_scale_text" in json_data else 0.0,
                 json_data["guidance_scale_lyric"] if "guidance_scale_lyric" in json_data else 0.0,
+                (
+                    json_data["audio2audio_enable"]
+                    if "audio2audio_enable" in json_data
+                    else False
+                ),
+                (
+                    json_data["ref_audio_strength"]
+                    if "ref_audio_strength" in json_data
+                    else 0.5
+                ),
+                (
+                    json_data["ref_audio_input"]
+                    if "ref_audio_input" in json_data
+                    else None
+                ),
             )
 
         sample_bnt.click(
@@ -556,6 +597,9 @@ def create_text2music_ui(
                 oss_steps,
                 guidance_scale_text,
                 guidance_scale_lyric,
+                audio2audio_enable,
+                ref_audio_strength,
+                ref_audio_input,
             ],
         )
 
@@ -580,6 +624,9 @@ def create_text2music_ui(
             oss_steps,
             guidance_scale_text,
             guidance_scale_lyric,
+            audio2audio_enable,
+            ref_audio_strength,
+            ref_audio_input,
         ], outputs=outputs + [input_params_json]
     )
 
