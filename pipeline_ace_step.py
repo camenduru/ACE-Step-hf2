@@ -2,7 +2,7 @@ import random
 import time
 import os
 import re
-# import spaces
+import spaces
 import torch
 import torch.nn as nn
 from loguru import logger
@@ -989,7 +989,7 @@ class ACEStepPipeline:
         latents, _ = self.music_dcae.encode(input_audio, sr=sr)
         return latents
 
-    # @spaces.GPU
+    @spaces.GPU
     def __call__(
         self,
         audio_duration: float = 60.0,
