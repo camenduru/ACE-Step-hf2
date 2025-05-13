@@ -93,14 +93,6 @@ def create_text2music_ui(
     load_data_func=None,
 ):
 
-    with gr.Row(equal_height=True):
-        curr_file_dir = os.path.dirname(__file__)
-        output_file_dir = os.path.join(curr_file_dir, "..", "..", "outputs")
-        json_files = [f for f in os.listdir(output_file_dir) if f.endswith('.json')]
-        json_files.sort(reverse=True, key=lambda x: int(x.split('_')[1]))
-        output_files = gr.Dropdown(choices=json_files, label="Select previous generated input params", scale=9, interactive=True)
-        load_bnt = gr.Button("Load", variant="primary", scale=1)
-
     with gr.Row():
         with gr.Column():
             with gr.Row(equal_height=True):
