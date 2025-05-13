@@ -892,39 +892,6 @@ def create_text2music_ui(
             ],
         )
 
-        def load_data(json_file):
-            json_file = os.path.join(output_file_dir, json_file)
-            json_data = load_data_func(json_file)
-            return json2output(json_data)
-
-        load_bnt.click(
-            fn=load_data,
-            inputs=[output_files],
-            outputs=[
-                audio_duration,
-                prompt,
-                lyrics,
-                infer_step,
-                guidance_scale,
-                scheduler_type,
-                cfg_type,
-                omega_scale,
-                manual_seeds,
-                guidance_interval,
-                guidance_interval_decay,
-                min_guidance_scale,
-                use_erg_tag,
-                use_erg_lyric,
-                use_erg_diffusion,
-                oss_steps,
-                guidance_scale_text,
-                guidance_scale_lyric,
-                audio2audio_enable,
-                ref_audio_strength,
-                ref_audio_input,
-            ],
-        )
-
     text2music_bnt.click(
         fn=text2music_process_func,
         inputs=[
