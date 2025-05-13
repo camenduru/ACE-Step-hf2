@@ -9,7 +9,7 @@ from loguru import logger
 from tqdm import tqdm
 import json
 import math
-from huggingface_hub import hf_hub_download
+from huggingface_hub import hf_hub_download, snapshot_download
 
 # from diffusers.pipelines.pipeline_utils import DiffusionPipeline
 from schedulers.scheduling_flow_match_euler_discrete import FlowMatchEulerDiscreteScheduler
@@ -63,7 +63,6 @@ class ACEStepPipeline:
             else:
                 checkpoint_dir = os.path.join(persistent_storage_path, "checkpoints")
         ensure_directory_exists(checkpoint_dir)
-
         self.checkpoint_dir = checkpoint_dir
         device = torch.device(f"cuda:{device_id}") if torch.cuda.is_available() else torch.device("cpu")
         if device.type == "cpu" and torch.backends.mps.is_available():
@@ -74,6 +73,22 @@ class ACEStepPipeline:
         self.device = device
         self.loaded = False
         self.torch_compile = torch_compile
+        self.lora_path = "none"
+    
+    def load_lora(self, lora_name_or_path):
+        if lora_name_or_path != self.lora_path and lora_name_or_path != "none":
+            if not os.path.exists(lora_name_or_path):
+                lora_download_path = snapshot_download(lora_name_or_path, cache_dir=self.checkpoint_dir)
+            else:
+                lora_download_path = lora_name_or_path
+            if self.lora_path != "none":
+                self.ace_step_transformer.unload_lora()
+            self.ace_step_transformer.load_lora_adapter(os.path.join(lora_download_path, "pytorch_lora_weights.safetensors"), adapter_name="zh_rap_lora", with_alpha=True)
+            logger.info(f"Loading lora weights from: {lora_name_or_path} download path is: {lora_download_path}")
+            self.lora_path = lora_name_or_path
+        elif self.lora_path != "none" and lora_name_or_path == "none":
+            logger.info("No lora weights to load.")
+            self.ace_step_transformer.unload_lora()
 
     def load_checkpoint(self, checkpoint_dir=None):
         device = self.device
@@ -976,6 +991,10 @@ class ACEStepPipeline:
         oss_steps: str = None,
         guidance_scale_text: float = 0.0,
         guidance_scale_lyric: float = 0.0,
+        audio2audio_enable: bool = False,
+        ref_audio_strength: float = 0.5,
+        ref_audio_input: str = None,
+        lora_name_or_path: str = "none",
         retake_seeds: list = None,
         retake_variance: float = 0.5,
         task: str = "text2music",
@@ -1000,7 +1019,7 @@ class ACEStepPipeline:
             self.load_checkpoint(self.checkpoint_dir)
             load_model_cost = time.time() - start_time
             logger.info(f"Model loaded in {load_model_cost:.2f} seconds.")
-
+        self.load_lora(lora_name_or_path)
         start_time = time.time()
 
         random_generators, actual_seeds = self.set_seeds(batch_size, manual_seeds)
@@ -1052,6 +1071,14 @@ class ACEStepPipeline:
             assert src_audio_path is not None and task in ("repaint", "edit", "extend"), "src_audio_path is required for retake/repaint/extend task"
             assert os.path.exists(src_audio_path), f"src_audio_path {src_audio_path} does not exist"
             src_latents = self.infer_latents(src_audio_path)
+
+        ref_latents = None
+        if ref_audio_input is not None and audio2audio_enable:
+            assert ref_audio_input is not None, "ref_audio_input is required for audio2audio task"
+            assert os.path.exists(
+                ref_audio_input
+            ), f"ref_audio_input {ref_audio_input} does not exist"
+            ref_latents = self.infer_latents(ref_audio_input)
 
         if task == "edit":
             texts = [edit_target_prompt]
@@ -1117,6 +1144,9 @@ class ACEStepPipeline:
                 repaint_start=repaint_start,
                 repaint_end=repaint_end,
                 src_latents=src_latents,
+                audio2audio_enable=audio2audio_enable,
+                ref_audio_strength=ref_audio_strength,
+                ref_latents=ref_latents,
             )
 
         end_time = time.time()
@@ -1139,6 +1169,7 @@ class ACEStepPipeline:
         }
 
         input_params_json = {
+            "lora_name_or_path": lora_name_or_path,
             "task": task,
             "prompt": prompt if task != "edit" else edit_target_prompt,
             "lyrics": lyrics if task != "edit" else edit_target_lyrics,
@@ -1169,6 +1200,9 @@ class ACEStepPipeline:
             "src_audio_path": src_audio_path,
             "edit_target_prompt": edit_target_prompt,
             "edit_target_lyrics": edit_target_lyrics,
+            "audio2audio_enable": audio2audio_enable,
+            "ref_audio_strength": ref_audio_strength,
+            "ref_audio_input": ref_audio_input,
         }
         # save input_params_json
         for output_audio_path in output_paths:

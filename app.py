@@ -34,6 +34,7 @@ def main(args):
     demo = create_main_demo_ui(
         text2music_process_func=model_demo.__call__,
         sample_data_func=data_sampler.sample,
+        load_data_func=data_sampler.load_json,
     )
     demo.queue(default_concurrency_limit=8).launch(
         
