@@ -928,16 +928,11 @@ def create_main_demo_ui(
     load_data_func=dump_func,
 ):
     with gr.Blocks(
-        title="ACE-Step Model 1.0 DEMO",
+        title="MusicGen",
     ) as demo:
         gr.Markdown(
             """
-            <h1 style="text-align: center;">ACE-Step: A Step Towards Music Generation Foundation Model</h1>
-            <p>
-                <a href="https://ace-step.github.io/" target='_blank'>Project</a> |
-                <a href="https://huggingface.co/ACE-Step/ACE-Step-v1-3.5B">Checkpoints</a> |
-                <a href="https://discord.gg/rjAZz2xBdG" target='_blank'>Discord</a> 
-            </p>
+            <h1 style="text-align: center;">MusicGen - An ACE-Step project</h1>
         """
         )
         with gr.Tab("text2music"):
