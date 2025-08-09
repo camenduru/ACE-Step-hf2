@@ -36,9 +36,7 @@ def main(args):
         sample_data_func=data_sampler.sample,
         load_data_func=data_sampler.load_json,
     )
-    demo.queue(default_concurrency_limit=8).launch(
-        
-    )
+    demo.queue().launch(default_concurrency_limit=8, inline=False, share=False, debug=True, server_name='0.0.0.0', server_port=7860, allowed_paths=["/content"])
 
 
 if __name__ == "__main__":
